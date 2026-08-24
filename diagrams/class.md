@@ -1,6 +1,6 @@
 # Class Diagram
 
-แผนภาพ Class Diagram ของระบบจัดการสต็อกสินค้า (Inventory System)
+แผนภาพ Class Diagram ของระบบจัดการสต็อกสินค้า (Inventory System) หลัง Refactor ด้วย **Factory Pattern** และ **Observer Pattern**
 
 ```mermaid
 classDiagram
@@ -33,7 +33,7 @@ classDiagram
     }
 
     class Notifier {
-        <<interface>>
+        <<interface / Observer>>
         +send(product: Product, message: str) void
     }
 
@@ -52,9 +52,12 @@ classDiagram
     }
 
     class InventoryService {
+        <<Subject>>
         -dict _products
         -list _notifiers
         -list _transactions
+        +register_notifier(notifier: Notifier) void
+        +unregister_notifier(notifier: Notifier) void
         +add_product(product: Product) void
         +get_product(name: str) Product
         +receive(product_name: str, quantity: int) void
@@ -66,9 +69,9 @@ classDiagram
     Product --> Category : has
     InventoryService o-- Product : aggregates
     InventoryService *-- StockTransaction : records
-    InventoryService o-- Notifier : notifies
-    EmailNotifier ..|> Notifier : realizes
-    SMSNotifier ..|> Notifier : realizes
+    InventoryService o-- Notifier : manages observers (0..*)
+    EmailNotifier ..|> Notifier : implements
+    SMSNotifier ..|> Notifier : implements
     NotifierFactory ..> Notifier : creates
     NotifierFactory ..> EmailNotifier : instantiates
     NotifierFactory ..> SMSNotifier : instantiates

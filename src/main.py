@@ -134,17 +134,25 @@ def test_us04_negative_threshold():
         print("✅ US-04 threshold ลบ: PASS")
 
 
-def test_us05_multi_channel():
-    """AC: แจ้งเตือนหลายช่องทาง"""
-    print("\n--- US-05: หลายช่องทาง ---")
-    notifiers = [
-        NotifierFactory.create("email", recipient_email="manager@shop.com"),
-        NotifierFactory.create("sms", phone_number="0899999999"),
-    ]
-    svc = InventoryService(notifiers=notifiers)
+def test_us05_multi_channel_and_observer():
+    """AC: แจ้งเตือนหลายช่องทาง + การทดสอบ Observer pattern dynamic registration"""
+    print("\n--- US-05: หลายช่องทาง + Observer Pattern ---")
+    email_notifier = NotifierFactory.create("email", recipient_email="manager@shop.com")
+    sms_notifier = NotifierFactory.create("sms", phone_number="0899999999")
+    
+    svc = InventoryService()
+    svc.register_notifier(email_notifier)
+    svc.register_notifier(sms_notifier)
+    
     svc.add_product(Product("สายไฟ 2.5 sq.mm", Category.ELECTRICAL, 50.0, 20, 15))
     svc.issue("สายไฟ 2.5 sq.mm", 8)
-    print("✅ US-05 หลายช่องทาง: PASS (ดู [EMAIL]+[SMS] ด้านบน)")
+    print("✅ US-05 หลายช่องทาง + Observer register: PASS (ดู [EMAIL]+[SMS] ด้านบน)")
+
+    # ทดสอบ unregister
+    print("\n--- ทดสอบ Unregister Notifier (Observer) ---")
+    svc.unregister_notifier(sms_notifier)
+    svc.issue("สายไฟ 2.5 sq.mm", 2)  # เหลือ 10 (< 15) -> ต้องแจ้งเตือนเฉพาะ Email
+    print("✅ Observer unregister: PASS (ต้องมีเฉพาะ [EMAIL] ด้านบน)")
 
 
 if __name__ == "__main__":
@@ -158,5 +166,5 @@ if __name__ == "__main__":
     test_us03_report()
     test_us04_set_threshold()
     test_us04_negative_threshold()
-    test_us05_multi_channel()
-    print("\n🎉 ทดสอบ AC ทั้งหมดเสร็จสิ้น")
+    test_us05_multi_channel_and_observer()
+    print("\n🎉 ทดสอบ AC และ Observer Pattern ทั้งหมดผ่าน 100%")

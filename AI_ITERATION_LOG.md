@@ -6,17 +6,17 @@
 
 ## 1. ตารางเปรียบเทียบผลลัพธ์: ก่อนมี Context vs หลังมี Context
 
-| ประเด็น | ก่อนมี context (ขั้นที่ 4: `inventory_no_context.py`) | หลังมี context (ขั้นที่ 6: `models.py`, `notifiers.py`, `service.py`) |
+| ประเด็น | ก่อนมี context (ขั้นที่ 4: `inventory_no_context.py`) | หลังมี context (ขั้นที่ 6 & 10: `models.py`, `notifiers.py`, `service.py`) |
 | :--- | :--- | :--- |
 | **การแยกไฟล์ / ความรับผิดชอบ** | รวมทุกอย่างไว้ในไฟล์เดียว (`inventory_no_context.py`) ทั้ง model, notification, logic, reporting | แยกไฟล์ตามหน้าที่อย่างชัดเจน: `models.py` (Data Model), `notifiers.py` (Notification logic), `service.py` (Business Logic) |
 | **Type Hints & Docstring** | ไม่มี Type hint ใน signature และไม่มี docstring อธิบายเมธอด | มี Type hint ครบถ้วนทุกฟังก์ชันตาม Python 3.11+ และมี docstring ภาษาไทยกำกับทุก public method |
-| **Service ผูกกับ Notifier ตรง ๆ หรือไม่** | ผูกตรงและ import `smtplib` มาส่งจริงใน method `issue()` (ละเมิด DIP และ SRP) | ไม่ผูกกับ concrete class โดยตรง แต่ใช้ `Notifier` Protocol และรับผ่าน Constructor (Dependency Injection) |
+| **Service ผูกกับ Notifier ตรง ๆ หรือไม่** | ผูกตรงและ import `smtplib` มาส่งจริงใน method `issue()` (ละเมิด DIP และ SRP) | ไม่ผูกกับ concrete class โดยตรง แต่ใช้ `Notifier` Protocol และรับผ่าน Constructor หรือ Dynamic Registration (Observer Pattern / DIP) |
 | **Hardcode Config หรือไม่** | Hardcode อีเมล `admin@shop.com`, `manager@shop.com`, เบอร์โทร `0812345678` ใน business logic | ไม่ hardcode ใน service โดย config ถูกส่งผ่าน Factory/Constructor จากภายนอก |
 | **การส่ง Email/SMS จริง** | เรียก `smtplib.SMTP` พยายามเชื่อมต่อเซิร์ฟเวอร์จริง (เสี่ยง error/fail) | ใช้การจำลองผลลัพธ์ผ่าน `print("[EMAIL] ...")` และ `print("[SMS] ...")` ตามกฎ |
 
 ---
 
-## 2. บันทึกการปรับปรุงรอบ Iteration (อย่างน้อย 2 รอบ)
+## 2. บันทึกการปรับปรุงรอบ Iteration
 
 ### รอบที่ 1: เงื่อนไขแจ้งเตือนสต็อกต่ำ และการส่ง Email จริง
 - **ผลลัพธ์ที่ผิดปกติ:** โค้ดจาก AI ก่อนหน้านี้ใช้เงื่อนไข `<= threshold` (ทำให้สต็อกเท่ากับ threshold ก็ส่งแจ้งเตือน) และมีการพยายาม import `smtplib` เพื่อส่งอีเมลจริง
@@ -40,10 +40,21 @@
 
 ---
 
+### รอบที่ 3 (Refactor ขั้นที่ 10): ปรับปรุงสถาปัตยกรรมด้วย Factory + Observer Pattern
+- **จุดที่ตรวจพบในขั้นที่ 9:** แม้ Service จะใช้ Dependency Injection อยู่แล้ว แต่การจัดการ Observers แบบ Dynamic ยังทำได้ไม่ชัดเจน
+- **การแก้ไข:**
+  1. เพิ่มเมธอด `register_notifier()` และ `unregister_notifier()` ใน `InventoryService` (Subject)
+  2. ใช้ `NotifierFactory` เป็นตัวกลางในการสร้าง `Notifier` ประจำแต่ละช่องทาง
+  3. ปรับ Class Diagram และ Sequence Diagram ให้สะท้อนโครงสร้าง Observer Pattern
+- **ผลลัพธ์หลังแก้ไข:** ระบบรองรับการเพิ่ม/ถอดถอนช่องทางแจ้งเตือนแบบ Runtime ได้อย่างสมบูรณ์ และสอดคล้องกับหลัก SOLID (SRP, OCP, LSP, ISP, DIP) 100%
+
+---
+
 ## 3. รายละเอียด Prompt และช่องทาง AI ที่ใช้งาน
 
 - **AI Model / Tool ที่ใช้:** Google Antigravity / Gemini & Claude
-- **Prompts ที่ใช้:**
+- **Prompts สำคัญที่ใช้ในการทดลอง:**
   1. *Prompt Step 3 (Review Spec):* "ฉันกำลังทำ Spec-Driven Development ช่วยรีวิว spec ด้านล่างนี้ในฐานะ senior software engineer ตอบเป็นภาษาไทย..."
   2. *Prompt Step 4 (No Context):* "จาก spec นี้ ช่วยเขียนโค้ด Python สำหรับฟีเจอร์แจ้งเตือนสต็อกต่ำ [spec.md]"
   3. *Prompt Step 6 (With Context):* "คุณคือ AI coding agent ของโปรเจกต์นี้ ทำตามกฎใน .ai-rules.md อย่างเคร่งครัด implement ฟีเจอร์ตาม spec ด้านล่าง โดยแยกไฟล์ตามที่กฎกำหนด..."
+  4. *Prompt Step 10 (Refactor SOLID):* "จากผลการตรวจ SOLID design... ช่วย refactor ใช้ Factory + Observer pattern: NotifierFactory.create(channel) และ InventoryService รองรับหลาย observer..."

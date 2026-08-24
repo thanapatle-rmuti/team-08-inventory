@@ -1,4 +1,4 @@
-"""InventoryService — business logic ของระบบจัดการสต็อก"""
+"""InventoryService — business logic ของระบบจัดการสต็อก พร้อม Observer Pattern"""
 
 from __future__ import annotations
 
@@ -8,29 +8,43 @@ from models import Product, Category, StockTransaction
 
 
 # ---------------------------------------------------------------------------
-# Notifier Protocol (ใช้ structural subtyping เพื่อไม่ import notifiers โดยตรง)
+# Notifier Protocol (Observer Interface)
 # ---------------------------------------------------------------------------
 
 
 class Notifier(Protocol):
-    """โปรโตคอลสำหรับช่องทางแจ้งเตือน"""
+    """โปรโตคอลสำหรับช่องทางแจ้งเตือน (Observer)"""
 
-    def send(self, product: Product, message: str) -> None: ...
+    def send(self, product: Product, message: str) -> None:
+        """ส่งข้อความแจ้งเตือน"""
+        ...
 
 
 # ---------------------------------------------------------------------------
-# InventoryService
+# InventoryService (Subject / Business Logic)
 # ---------------------------------------------------------------------------
 
 
 class InventoryService:
-    """บริการจัดการสต็อกสินค้า — รับ/จ่าย, แจ้งเตือน, รายงาน"""
+    """บริการจัดการสต็อกสินค้า — รับ/จ่าย, แจ้งเตือน (Subject), รายงาน"""
 
     def __init__(self, notifiers: list[Notifier] | None = None) -> None:
-        """สร้าง InventoryService พร้อมรับ notifier ผ่าน DI"""
+        """สร้าง InventoryService พร้อมรับ notifier ผ่าน Dependency Injection"""
         self._products: dict[str, Product] = {}
-        self._notifiers: list[Notifier] = notifiers or []
+        self._notifiers: list[Notifier] = list(notifiers) if notifiers else []
         self._transactions: list[StockTransaction] = []
+
+    # -- Observer Pattern Management (Subject methods) --
+
+    def register_notifier(self, notifier: Notifier) -> None:
+        """ลงทะเบียน Notifier (Observer) เข้าระบบ"""
+        if notifier not in self._notifiers:
+            self._notifiers.append(notifier)
+
+    def unregister_notifier(self, notifier: Notifier) -> None:
+        """ยกเลิกการลงทะเบียน Notifier (Observer)"""
+        if notifier in self._notifiers:
+            self._notifiers.remove(notifier)
 
     # -- จัดการสินค้า --
 
@@ -57,7 +71,7 @@ class InventoryService:
         )
 
     def issue(self, product_name: str, quantity: int) -> None:
-        """บันทึกจ่ายสินค้าออกจากคลัง"""
+        """บันทึกจ่ายสินค้าออกจากคลัง และแจ้งเตือน Observer หากสต็อกต่ำ"""
         if quantity <= 0:
             raise ValueError("จำนวนต้องมากกว่า 0")
         product = self.get_product(product_name)
@@ -71,7 +85,7 @@ class InventoryService:
         if product.is_below_threshold():
             self._notify_low_stock(product)
 
-    # -- แจ้งเตือน --
+    # -- แจ้งเตือน Observer (Broadcast) --
 
     def _notify_low_stock(self, product: Product) -> None:
         """แจ้งเตือน observer ทุกตัวเมื่อสต็อกต่ำกว่า threshold"""

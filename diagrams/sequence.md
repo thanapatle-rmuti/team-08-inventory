@@ -1,15 +1,16 @@
 # Sequence Diagram
 
-แผนภาพ Sequence Diagram แสดงลำดับการทำงานเมื่อพนักงานบันทึกจ่ายสินค้าจนสต็อกต่ำกว่า threshold
+แผนภาพ Sequence Diagram แสดงลำดับการทำงานเมื่อพนักงานบันทึกจ่ายสินค้าจนสต็อกต่ำกว่า threshold พร้อมการกระจายแจ้งเตือนไปยัง Observers
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Staff as พนักงานคลังสินค้า
-    participant Service as InventoryService
+    participant Service as InventoryService (Subject)
     participant Product as Product
     participant Trans as StockTransaction
-    participant Notifier as Notifier (Email/SMS)
+    participant Email as EmailNotifier (Observer)
+    participant SMS as SMSNotifier (Observer)
 
     Staff->>Service: issue("สายไฟ 2.5 sq.mm", 8)
     activate Service
@@ -30,12 +31,19 @@ sequenceDiagram
 
     opt สต็อกต่ำกว่า threshold (is_below_threshold == True)
         Service->>Service: _notify_low_stock(product)
-        loop แจ้งเตือนทุก Notifier ที่ลงทะเบียนไว้
-            Service->>Notifier: send(product, message)
-            activate Notifier
-            Note over Notifier: print("[EMAIL]/[SMS] สต็อกต่ำ...")
-            Notifier-->>Service: ส่งเสร็จสิ้น
-            deactivate Notifier
+        
+        par Broadcast ไปยัง Observers ทุกตัว
+            Service->>Email: send(product, message)
+            activate Email
+            Note over Email: print("[EMAIL] ถึง manager@shop.com: ...")
+            Email-->>Service: สำเร็จ
+            deactivate Email
+        and
+            Service->>SMS: send(product, message)
+            activate SMS
+            Note over SMS: print("[SMS] ถึง 0812345678: ...")
+            SMS-->>Service: สำเร็จ
+            deactivate SMS
         end
     end
 
