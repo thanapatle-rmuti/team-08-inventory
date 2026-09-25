@@ -1,8 +1,9 @@
 import sys
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-from models import Product, Category
+from models import Category, Product
 from notifiers import NotifierFactory
 from service import InventoryService
 
@@ -129,7 +130,7 @@ def test_us04_negative_threshold():
     try:
         p.set_threshold(-5)
         print("❌ US-04 threshold ลบ: FAIL — ไม่ raise error")
-    except ValueError as e:
+    except ValueError:
         assert p.threshold == 15
         print("✅ US-04 threshold ลบ: PASS")
 

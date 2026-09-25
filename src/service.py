@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from models import Product, Category, StockTransaction
-
+from models import Category, DigitalProduct, OrderResult, Product, StockTransaction
 
 # ---------------------------------------------------------------------------
 # Notifier Protocol (Observer Interface)
@@ -85,6 +84,43 @@ class InventoryService:
         if product.is_below_threshold():
             self._notify_low_stock(product)
 
+    def sell(
+        self, product_name: str, quantity: int, confirmed: bool = True
+    ) -> OrderResult:
+        """ขายสินค้าตามกฎของแต่ละชนิดสินค้า (Physical vs Digital)"""
+        if not isinstance(quantity, int) or isinstance(quantity, bool):
+            raise TypeError("จำนวนต้องเป็นตัวเลขจำนวนเต็ม (int)")
+        if quantity <= 0:
+            raise ValueError("จำนวนต้องมากกว่า 0")
+
+        product = self.get_product(product_name)
+
+        if isinstance(product, DigitalProduct):
+            # สินค้าดิจิทัล: ขายแล้วยอดคงเหลือไม่ลด
+            return OrderResult(
+                product_name=product.name,
+                quantity=quantity,
+                confirmed=confirmed,
+                download_url=product.download_url,
+            )
+
+        # สินค้าจับต้องได้: ตรวจสอบสต็อก ตัดสต็อก และแจ้งเตือน threshold
+        if product.quantity < quantity:
+            raise ValueError("สต็อกไม่เพียงพอ")
+        product.quantity -= quantity
+        self._transactions.append(
+            StockTransaction(product_name, "issue", quantity, product.quantity)
+        )
+        if product.is_below_threshold():
+            self._notify_low_stock(product)
+
+        return OrderResult(
+            product_name=product.name,
+            quantity=quantity,
+            confirmed=confirmed,
+            download_url=None,
+        )
+
     # -- แจ้งเตือน Observer (Broadcast) --
 
     def _notify_low_stock(self, product: Product) -> None:
@@ -109,3 +145,17 @@ class InventoryService:
             )
             report[cat_name] = report.get(cat_name, 0) + product.stock_value
         return report
+
+
+    def low_stock_items(self, threshold: int) -> list[str]:
+        """คืนรายชื่อสินค้าที่มีของเหลือน้อยกว่าหรือเท่ากับ threshold โดยเรียงตามชื่อ"""
+        matched = [
+            product.name
+            for product in self._products.values()
+            if product.quantity <= threshold
+        ]
+        return sorted(matched)
+
+
+# Alias for compatibility with Lab 5
+Inventory = InventoryService

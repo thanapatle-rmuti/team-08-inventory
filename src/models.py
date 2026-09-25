@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -49,3 +49,35 @@ class StockTransaction:
     transaction_type: str  # "receive" หรือ "issue"
     quantity: int
     resulting_stock: int
+
+
+@dataclass
+class PhysicalProduct(Product):
+    """สินค้าจับต้องได้: การขายจะตัดสต็อก และต้องปฏิเสธหากสั่งซื้อเกินสต็อก"""
+
+    pass
+
+
+@dataclass
+class DigitalProduct(Product):
+    """สินค้าดิจิทัล: การขายไม่ลดสต็อก และมีลิงก์สำหรับดาวน์โหลด"""
+
+    download_url: str = ""
+
+
+@dataclass
+class OrderResult:
+    """ผลลัพธ์คำสั่งซื้อสินค้า"""
+
+    product_name: str
+    quantity: int
+    confirmed: bool = False
+    download_url: str | None = None
+
+    def get_download_link(self) -> str:
+        """ขอรับลิงก์ดาวน์โหลด (เฉพาะสินค้าดิจิทัลและคำสั่งซื้อยืนยันแล้วเท่านั้น)"""
+        if not self.confirmed:
+            raise PermissionError("เปิดลิงก์ดาวน์โหลดไม่ได้ถ้าคำสั่งซื้อยังไม่ยืนยัน")
+        if not self.download_url:
+            raise ValueError("สินค้านี้ไม่มีลิงก์ดาวน์โหลด")
+        return self.download_url
