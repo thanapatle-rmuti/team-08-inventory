@@ -1,0 +1,16 @@
+[tool.ruff]
+line-length = 100
+extend-exclude = ["lab04-ai-coding-ux"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = [
+    "src/main.py",
+    "src/inventory_no_context.py",
+]
