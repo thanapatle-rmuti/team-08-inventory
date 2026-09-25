@@ -149,10 +149,11 @@ class InventoryService:
 
     def low_stock_items(self, threshold: int) -> list[str]:
         """คืนรายชื่อสินค้าที่มีของเหลือน้อยกว่าหรือเท่ากับ threshold โดยเรียงตามชื่อ"""
+        # จงใจแก้เงื่อนไขให้ผิด (จาก <= เป็น <) เพื่อทดสอบ CI ให้ขึ้นสีแดงตามขั้นตอนที่ 11
         matched = [
             product.name
             for product in self._products.values()
-            if product.quantity <= threshold
+            if product.quantity < threshold
         ]
         return sorted(matched)
 
