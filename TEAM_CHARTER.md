@@ -2,11 +2,10 @@
 
 ## สมาชิกและบทบาท
 
-| ชื่อ | GitHub Username | บทบาท |
+| ชื่อ-นามสกุล / รหัสนักศึกษา | GitHub Username | บทบาท |
 |---|---|---|
-| ...  | ...             | Product Owner |
-| ...  | ...             | Scrum Master / Developer |
-| ...  | ...             | Developer |
+| ธนภัทร (67332310017-9) | thanapatle-rmuti | Product Owner / Developer |
+| AI Assistant | - | Scrum Master / Developer (Reviewer) |
 
 ## Branching Strategy
 
