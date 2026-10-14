@@ -1,0 +1,12 @@
+# UI Mockup Links - Lab 04
+
+1. ไฟล์ Draw.io ประจำ Repository:
+   assets/inventory-mockup.drawio
+   (เปิดแก้ไขหรือดูตัวอย่างผ่าน https://app.diagrams.net หรือส่วนขยาย Draw.io Integration ใน VS Code)
+
+2. ลิงก์ออนไลน์สำหรับเปิดดู Mockup (Figma / Web Prototype Viewer):
+   https://www.figma.com/file/swe-inventory-67332310017-9-mockup (ทุกคนที่มีลิงก์สามารถดูได้ - Can View)
+
+หน้าจอที่จัดทำ Mockup:
+- หน้าที่ 1: แดชบอร์ดสรุปรายการสินค้า (Dashboard with Physical/Digital badges & Warning status)
+- หน้าที่ 2: หน้าเพิ่มสินค้าใหม่ (Add Product Form with validation error & success state banner)
